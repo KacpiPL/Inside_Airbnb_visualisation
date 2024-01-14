@@ -72,16 +72,24 @@ rm(rating_null, bedroom_null, beds_null, bath_null, name, unnecessary_columns)
 # Clean columns Rating, Bedroom, Beds, Bath
 df$Rating <- as.numeric(gsub("★", "", df$Rating))
 
-## Divide Bedroom to 2 collumns -> Bedroom and is_studio
+## Divide Bedroom to 2 columns -> Bedroom and is_studio
 df$is_studio <- ifelse(df$Bedroom == "Studio", 1, 0)
 df$Bedroom<- as.numeric(ifelse(df$Bedroom == "Studio", 1, gsub( " .*$", "", df$Bedroom)))
 
 df$Beds <- as.numeric(gsub( " .*$", "", df$Beds))
 
+# Bath column has also values like " half-bath", "Shared half-bath" and "Half-bath"
+# We transform them as 0.5
 df$Bath <- as.numeric(ifelse(
   df$Bath == " half-bath" | df$Bath == "Shared half-bath" | df$Bath == "Half-bath",
   0.5,
   gsub( " .*$", "", df$Bath)))
+
+# Add binary column Half_bath
+df$Half_bath <- ifelse(df$Bath %% 1 == 0.5, 1, 0)
+
+# Round up the column Bath
+df$Bath <- ceiling(df$Bath)
 
 # Delete column "name"
 df <- df[ , !names(df) %in% "name"]
@@ -89,12 +97,6 @@ df <- df[ , !names(df) %in% "name"]
 # Add column Price_EUR
 ## GBP/EUR at the beginning of December = 1.16
 df$Price_EUR <- ifelse(df$Currency == "EUR", df$price, df$price / 1.16)
-
-# Add column Half_bath
-df$Half_bath <- ifelse(df$Bath %% 1 == 0.5, 1, 0)
-
-# Round up the column Bath
-df$Bath <- ceiling(df$Bath)
 
 # Change the order of columns
 new_order <- c(
