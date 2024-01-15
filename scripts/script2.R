@@ -89,13 +89,8 @@ num_obs_city_without_nas_without_outliers <- df %>%
 # write.csv(df, "./df_final.csv")
 
 ##### Charts #####
-ggplot(data = df, aes(y = Price_EUR, x = City)) +
-  geom_boxplot()
-
-par(mfrow=c(2,2))
-hist(df_Paris_z$Price_EUR)
-hist(df_Berlin_z$Price_EUR)
-hist(df_London_z$Price_EUR)
+rm(list=ls())
+df <- read.csv("./data/df_final.csv")
 
 ##### Load the Shapefiles #####
 
@@ -167,3 +162,9 @@ pal <- colorFactor(palette = "viridis", domain = berlin_sp_sf$name)
 leaflet(berlin_sp_sf) %>%
   addTiles() %>%
   addPolygons(fillColor = ~pal(name), fillOpacity = 0.5, color = "white", weight = 1)
+
+
+
+
+
+
