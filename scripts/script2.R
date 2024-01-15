@@ -21,6 +21,8 @@ num_nas <- as.data.frame(colSums(is.na(df)))
 df <- df %>%
   mutate(neighbourhood = ifelse(City == "Berlin", neighbourhood_group, neighbourhood)) %>%
   mutate(neighbourhood = ifelse(City == "Paris" & neighbourhood == "Entrepôt", "Enclos-St-Laurent", neighbourhood))
+  mutate(neighbourhood = ifelse(City == "Paris" & neighbourhood == "Buttes-Montmartre", "Butte-Montmartre", neighbourhood))
+
 # delete column with the most NAs and unnecessary
 
 df <- subset(df, select = -neighbourhood_group)
@@ -174,7 +176,18 @@ leaflet(london_data) %>%
   addLegend(pal = pal, values = ~Price_EUR, title = "Price")
 
 leaflet(berlin_data) %>%
-  addTiles() %>%
   addCircleMarkers(~longitude, ~latitude, color = ~pal(Price_EUR), fillOpacity = 0.1, radius = 0.1) %>%
   setView(lng = mean(berlin_data$longitude), lat = mean(berlin_data$latitude), zoom = 12) %>%
-  addLegend(pal = pal, values = ~Price_EUR, title = "Price")
+  addLegend(pal = pal, values = ~Price_EUR, title = "Price") %>%
+  addProviderTiles('Stadia.AlidadeSmooth') %>%
+  addPolygons(data = berlin_sp_sf, color = ~pal(name), weight = 1, smoothFactor = 0.5,
+              opacity = 1.0, fillOpacity = 0.5,
+              highlightOptions = highlightOptions(color = "white", weight = 2,
+                                                  bringToFront = TRUE))
+
+pal <- colorFactor(palette = "viridis", domain = berlin_sp_sf$name)
+
+# Create the map
+leaflet(berlin_sp_sf) %>%
+  addTiles() %>%
+  addPolygons(fillColor = ~pal(name), fillOpacity = 0.5, color = "white", weight = 1)
