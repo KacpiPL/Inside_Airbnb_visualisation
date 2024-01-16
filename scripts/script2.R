@@ -19,16 +19,14 @@ num_obs_city_with_nas <- df %>%
 num_nas <- as.data.frame(colSums(is.na(df)))
 
 df <- df %>%
-  mutate(neighbourhood = ifelse(City == "Berlin", neighbourhood_group, neighbourhood)) %>%
+  #mutate(neighbourhood = ifelse(City == "Berlin", neighbourhood_group, neighbourhood)) %>%
   mutate(neighbourhood = ifelse(City == "Paris" & neighbourhood == "Entrepôt", "Enclos-St-Laurent", neighbourhood)) %>%
   mutate(neighbourhood = ifelse(City == "Paris" & neighbourhood == "Buttes-Montmartre", "Butte-Montmartre", neighbourhood))
 
 # delete column with the most NAs and unnecessary
 
-# Delete column with the most NAs and unnecessary
 df <- subset(df, select = -neighbourhood_group)
-
-# Delete reviews per month column
+# delete reviews per month column
 df <- subset(df, select= -reviews_per_month)
 
 df_without_nas <- na.omit(df)
@@ -86,11 +84,42 @@ num_obs_city_without_nas_without_outliers <- df %>%
 
 # According to the z score method applied to each column we lose another 20 thousand observations
 
-# write.csv(df, "./df_final.csv")
+##### Apply z score method to just one column - Price_EUR #####
+# Run code from NAs handling before and divide into 3 dfs
+
+delete_outliers_one_column <- function(df, threshold, col_name){
+  z_scores <- df[col_name] %>% 
+    lapply(function(x) scale(x, center = TRUE, scale = TRUE)) %>%
+    as.data.frame()
+  
+  # Create a logical index for rows to keep
+  threshold <- 3
+  rows_to_keep <- apply(z_scores, 1, function(x) all(abs(x) <= threshold))
+  
+  # Filter out outliers
+  df <- df[rows_to_keep, ]
+}
+
+# Apply function to each city
+df_Berlin_z <- delete_outliers_one_column(df_Berlin, 3, "Price_EUR")
+df_Paris_z <- delete_outliers_one_column(df_Paris, 3, "Price_EUR")
+df_London_z <- delete_outliers_one_column(df_London, 3, "Price_EUR")
+
+# Merge dfs
+df_z <- rbind(df_Berlin_z, df_Paris_z, df_London_z)
+
+df_z %>% 
+  group_by(City) %>%
+  summarise(n())
 
 ##### Charts #####
-rm(list=ls())
-df <- read.csv("./data/df_final.csv")
+ggplot(data = df, aes(y = Price_EUR, x = City)) +
+  geom_boxplot()
+
+par(mfrow=c(2,2))
+hist(df_Paris_z$Price_EUR)
+hist(df_Berlin_z$Price_EUR)
+hist(df_London_z$Price_EUR)
 
 ##### Load the Shapefiles #####
 
@@ -109,7 +138,7 @@ berlin_sp_sf <- st_as_sf(berlin_sp)
 # Join the simple feature objects with dfs
 paris_data <- left_join(paris_sp_sf, df %>% filter(City == "Paris") %>% group_by(neighbourhood) %>% summarise(Avg_Rating = mean(Rating)), by = c("name" = "neighbourhood"))
 london_data <- left_join(london_sp_sf, df %>% filter(City == "London") %>% group_by(neighbourhood) %>% summarise(Avg_Rating = mean(Rating)), by = c("name" = "neighbourhood"))
-berlin_data <- left_join(berlin_sp_sf, df %>% filter(City == "Berlin") %>% group_by(neighbourhood) %>% summarise(Avg_Rating = mean(Rating)), by = c("BEZIRKSNAM" = "neighbourhood"))
+berlin_data <- left_join(berlin_sp_sf, df %>% filter(City == "Berlin") %>% group_by(neighbourhood) %>% summarise(Avg_Rating = mean(Rating)), by = c("neighbourhood" = "neighbourhood"))
 
 # Create the maps
 ggplot() +
@@ -142,7 +171,7 @@ leaflet(paris_data) %>%
 
 leaflet(london_data) %>%
   addTiles() %>%
-  addCircleMarkers(~longitude, ~latitude, color = ~pal(Price_EUR), fillOpacity = 0.1, radius = 0.01) %>%
+  addCircleMarkers(~longitude, ~latitude, color = ~pal(Price_EUR), fillOpacity = 0.1, radius = 0.1) %>%
   setView(lng = mean(london_data$longitude), lat = mean(london_data$latitude), zoom = 10) %>%
   addLegend(pal = pal, values = ~Price_EUR, title = "Price")
 
@@ -162,9 +191,3 @@ pal <- colorFactor(palette = "viridis", domain = berlin_sp_sf$name)
 leaflet(berlin_sp_sf) %>%
   addTiles() %>%
   addPolygons(fillColor = ~pal(name), fillOpacity = 0.5, color = "white", weight = 1)
-
-
-
-
-
-

@@ -1,23 +1,40 @@
 library(dplyr)
 library(tidyr)
 library(stringr)
-
+library(geosphere)
+library(purrr)
+library(readr)
 rm(list=ls())
 
+berlin <- read_csv('./data/Paris1_listings.csv')
+
 # Load all datasets
-df_berlin <- read.csv("./data/Berlin_listings.csv")
-df_london <- read.csv("./data/London_listings.csv")
-df_paris <- read.csv("./data/Paris_listings.csv")
+file_paths_berlin <- paste0("./data/Berlin", 1:4, "_listings.csv")
+file_paths_london <- paste0("./data/London", 1:4, "_listings.csv")
+file_paths_paris <- paste0("./data/Paris", 1:4, "_listings.csv")
 
-# Add City and curency columns to each dataset
-df_berlin$City <- "Berlin"
-df_berlin$Currency <- "EUR"
+# Defining the quarter end dates
+quarter_end_dates <- c("2023-03-31", "2023-06-30", "2023-09-30", "2023-12-31")
 
-df_london$City <- "London"
-df_london$Currency <- "GBP"
+# Function to read and combine data for a city
+read_and_combine <- function(file_paths, city, currency) {
+  map_df(file_paths, ~ {
+    data <- read_csv(.x)
+    data <- data %>%
+      mutate(
+        City = city,
+        Date = quarter_end_dates[str_extract(.x, "(?<=Berlin|London|Paris)\\d") %>% as.integer()],
+        Currency = currency
+      )
+    data
+  })
+}
 
-df_paris$City <- "Paris"
-df_paris$Currency <- "EUR"
+# Read and combine the data for each city
+df_berlin <- read_and_combine(file_paths_berlin, "Berlin", "EUR")
+df_london <- read_and_combine(file_paths_london, "London", "GBP")
+df_paris <- read_and_combine(file_paths_paris, "Paris", "EUR")
+
 
 df <- rbind(df_berlin, df_london, df_paris)
 rm(df_berlin, df_london, df_paris)
@@ -98,9 +115,26 @@ df <- df[ , !names(df) %in% "name"]
 ## GBP/EUR at the beginning of December = 1.16
 df$Price_EUR <- ifelse(df$Currency == "EUR", df$price, df$price / 1.16)
 
+Berlin_cent <- c(13.404954, 52.520008)
+London_cent <- c(-0.118092, 51.509865)
+Paris_cent  <- c(2.349014, 48.864716)
+
+# Add the center_distance column
+df <- df %>%
+  mutate(
+    center_distance = case_when(
+      City == "Berlin" ~ distm(cbind(longitude, latitude), Berlin_cent, fun = distVincentySphere) / 1000,
+      City == "London" ~ distm(cbind(longitude, latitude), London_cent, fun = distVincentySphere) / 1000,
+      City == "Paris"  ~ distm(cbind(longitude, latitude), Paris_cent, fun = distVincentySphere) / 1000
+    )
+  )
+
+
+
 # Change the order of columns
 new_order <- c(
   "id",
+  "Date",
   "City",
   "Currency",
   "Type",
@@ -116,6 +150,7 @@ new_order <- c(
   "neighbourhood",
   "latitude",
   "longitude",
+  "center_distance",
   "room_type",
   "minimum_nights",
   "number_of_reviews",
@@ -125,6 +160,8 @@ new_order <- c(
   "availability_365",
   "number_of_reviews_ltm"
 )
+
+
 
 df <- df[, new_order]
 
