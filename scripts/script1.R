@@ -6,8 +6,6 @@ library(purrr)
 library(readr)
 rm(list=ls())
 
-berlin <- read_csv('./data/Paris1_listings.csv')
-
 # Load all datasets
 file_paths_berlin <- paste0("./data/Berlin", 1:4, "_listings.csv")
 file_paths_london <- paste0("./data/London", 1:4, "_listings.csv")
@@ -162,8 +160,6 @@ new_order <- c(
   "number_of_reviews_ltm",
   "Business_Owned"
 )
-
-
 
 df <- df[, new_order]
 
