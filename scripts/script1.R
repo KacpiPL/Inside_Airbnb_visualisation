@@ -126,7 +126,8 @@ df <- df %>%
       City == "Berlin" ~ distm(cbind(longitude, latitude), Berlin_cent, fun = distVincentySphere) / 1000,
       City == "London" ~ distm(cbind(longitude, latitude), London_cent, fun = distVincentySphere) / 1000,
       City == "Paris"  ~ distm(cbind(longitude, latitude), Paris_cent, fun = distVincentySphere) / 1000
-    )
+    ),
+    Business_Owned = ifelse(calculated_host_listings_count > 10, 1, 0)
   )
 
 
@@ -158,7 +159,8 @@ new_order <- c(
   "reviews_per_month",
   "calculated_host_listings_count",
   "availability_365",
-  "number_of_reviews_ltm"
+  "number_of_reviews_ltm",
+  "Business_Owned"
 )
 
 
