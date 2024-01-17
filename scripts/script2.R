@@ -7,11 +7,10 @@ library(geojsonio)
 library(sf)
 library(treemap)
 
-
 rm(list=ls())
 
+# Read .csv from script1
 df <- read.csv("./data/df.csv")
-df_raw <- read.csv("./data/df.csv")
 ##### NAs handling #####
 # number of observations in each city
 num_obs_city_with_nas <- df %>%
@@ -25,10 +24,10 @@ num_nas <- as.data.frame(colSums(is.na(df)))
   #mutate(neighbourhood = ifelse(City == "Paris" & neighbourhood == "Entrepôt", "Enclos-St-Laurent", neighbourhood)) %>%
   #mutate(neighbourhood = ifelse(City == "Paris" & neighbourhood == "Buttes-Montmartre", "Butte-Montmartre", neighbourhood))
 
-# delete column with the most NAs and unnecessary
-
+# Delete column with the most NAs and unnecessary
 df <- subset(df, select = -neighbourhood_group)
-# delete reviews per month column
+
+# Delete reviews per month column
 df <- subset(df, select= -reviews_per_month)
 
 df_without_nas <- na.omit(df)
@@ -84,35 +83,14 @@ num_obs_city_without_nas_without_outliers <- df %>%
   group_by(City) %>%
   summarise(n())
 
-# According to the z score method applied to each column we lose another 20 thousand observations
+# According to the z score method applied to each column we lose around 400 thousand observations
+# 648 433 <- n(df) at the beginning
+# 234 833 <- n(df) after cleaning the df and outliers handling
 
-##### Apply z score method to just one column - Price_EUR #####
-# Run code from NAs handling before and divide into 3 dfs
+write.csv(df, "./data/final_df.csv")
+rm(list=ls())
 
-delete_outliers_one_column <- function(df, threshold, col_name){
-  z_scores <- df[col_name] %>% 
-    lapply(function(x) scale(x, center = TRUE, scale = TRUE)) %>%
-    as.data.frame()
-  
-  # Create a logical index for rows to keep
-  threshold <- 3
-  rows_to_keep <- apply(z_scores, 1, function(x) all(abs(x) <= threshold))
-  
-  # Filter out outliers
-  df <- df[rows_to_keep, ]
-}
-
-# Apply function to each city
-df_Berlin_z <- delete_outliers_one_column(df_Berlin, 3, "Price_EUR")
-df_Paris_z <- delete_outliers_one_column(df_Paris, 3, "Price_EUR")
-df_London_z <- delete_outliers_one_column(df_London, 3, "Price_EUR")
-
-# Merge dfs
-df_z <- rbind(df_Berlin_z, df_Paris_z, df_London_z)
-
-df_z %>% 
-  group_by(City) %>%
-  summarise(n())
+df <- read.csv("./data/final_df.csv")
 
 ##### Charts #####
 ggplot(data = df, aes(y = Price_EUR, x = City)) +
