@@ -8,6 +8,7 @@ library(sf)
 library(reshape2)
 library(hrbrthemes)
 library(viridis)
+library(gridExtra)
 
 rm(list=ls())
 
@@ -67,12 +68,12 @@ ggplot(df, aes(x = Rating, fill = room_type)) +
 # Mean price by City, room type
 mean_price_room_type <- df %>%
   group_by(City, room_type) %>%
-  summarise(mean_price = mean(Price_EUR))
+  summarise(mean_price = mean(Price_EUR/Beds))
 
 ggplot(mean_price_room_type, aes(x=City, y=mean_price, fill=room_type)) +
   geom_col(position = position_dodge()) +
   labs(
-    title = "Mean Price rent price by City and Room Type", 
+    title = "Mean rent price per Beds by City and Room Type", 
     x = "City", 
     y = "Mean Price (EUR)") +
   theme_light()
@@ -80,7 +81,7 @@ ggplot(mean_price_room_type, aes(x=City, y=mean_price, fill=room_type)) +
 
 ##### to be changed #####
 # Scatterplot overloaded
-ggplot(df_Berlin, aes(x=Rating, y=Price_EUR)) +
+ggplot(df_Berlin, aes(x=Rating, y=Price_EUR/Beds)) +
   geom_point() +
   geom_smooth(method=lm , color="red", fill="#69b3a2", se=TRUE) +
   scale_fill_viridis(discrete = TRUE) +
@@ -92,15 +93,84 @@ ggplot(df_Berlin, aes(x=Rating, y=Price_EUR)) +
   ggtitle("A Violin wrapping a boxplot") +
   xlab("")
 
+ggplot(df, aes(x = center_distance, y = Price_EUR/Beds)) +
+  geom_point() +
+  labs(title = "Price vs. Distance from City Center", x = "Distance from Center (km)", y = "Price (EUR)")
+
+# Bubble chart
+df_Bubble_Berlin <- df %>%
+  filter(City == "Berlin") %>%
+  group_by(City, neighbourhood) %>%
+  summarise(mean_rating = mean(Rating),
+            mean_price = mean(Price_EUR/Beds),
+            mean_center_distance = mean(center_distance))
+
+ggplot(df_Bubble_Berlin, aes(x = mean_center_distance, y = mean_price, size = mean_rating)) +
+  geom_point(alpha=0.7) +
+  scale_size(range = c(.1, 10), name="Mean rating")
+
+ggplot(df_Bubble_Berlin, aes(x = mean_rating, y = mean_price, size = mean_center_distance)) +
+  geom_point(alpha=0.7) +
+  scale_size(range = c(.1, 12), name="Mean center distance")
+
+
+# Histograms of ratings
+
+ggplot(df_Berlin, aes(x = Rating)) +
+  geom_histogram(binwidth = 0.1) +
+  labs(title = "Distribution of Property Ratings", x = "Rating", y = "Count")
+
+ggplot(df_London, aes(x = Rating)) +
+  geom_histogram(binwidth = 0.1) +
+  labs(title = "Distribution of Property Ratings", x = "Rating", y = "Count")
+
+ggplot(df_Paris, aes(x = Rating)) +
+  geom_histogram(binwidth = 0.1) +
+  labs(title = "Distribution of Property Ratings", x = "Rating", y = "Count")
+
+
+# combined histograms
+ggplot(df, aes(x = Rating, fill = City)) +
+  geom_histogram(position = "identity", alpha = 0.5, bins = 30) +
+  labs(title = "Comparison of Two Datasets", x = "Value", y = "Frequency")
+
+
+df_hist <- df %>%
+  group_by(City, Rating) %>%
+  summarise(count = n()) %>%
+  mutate(Percent = count / sum(count))
+
+ggplot(df_hist, aes(x = Rating, y = Percent, fill = City)) +
+  geom_histogram(position = "identity", alpha = 0.5, bins = 30) +
+  labs(title = "Percentage Share of Ratings by City", x = "Ratings", y = "Percentage") +
+
+
+df %>%
+  ggplot(aes(x=Rating, fill=City)) +
+  geom_histogram( color="#e9ecef", alpha=0.6, position = 'identity') +
+  scale_fill_manual(values=c("#69b3a2", "#404080")) +
+  theme_ipsum() +
+  labs(fill="")
+
+
 # Bubble chart <- find some interesting variables
 # room_type
 # price
 # rating
+# City
+
 
 ggplot(df, aes(x = Rating, y = Price_EUR, size = Rating)) + 
   geom_point(alpha = 0.7) + 
   theme_light() +
   labs(title = "Price vs. Number of Reviews by Room Type", x = "Rating", y = "Price (EUR)")
+
+
+
+
+
+
+
 
 
 ##### Listings in time #####
@@ -145,14 +215,16 @@ df_chart_grouped <- df_chart %>%
   group_by(Date, City) %>%
   summarise(avg_price = round(mean(Price_EUR/Beds), 2))
 
-ggplot(data = df_chart_grouped, aes(x = Date, y = avg_price, 
+p1 <- ggplot(data = df_chart_grouped, aes(x = Date, y = avg_price, 
                           color = factor(City),
                           group = factor(City))) +
   geom_point() +
   geom_line() +
-  theme_minimal()
+  theme_minimal() +
+  labs(title = "Average Price per Bed in Each City")
 
 # Number of listings in each city
+# Change to
 df_chart2 <- df[, c("Date", "City")]
 df_chart2 <- na.omit(df_chart2)
 
@@ -160,13 +232,15 @@ df_chart2_grouped <- df_chart2 %>%
   group_by(Date, City) %>%
   summarise(num_listings = round(n(), 2))
 
-ggplot(data = df_chart2_grouped, aes(x = Date, y = num_listings, 
+p2 <- ggplot(data = df_chart2_grouped, aes(x = Date, y = num_listings, 
                                     color = factor(City),
                                     group = factor(City))) +
   geom_point() +
   geom_line() +
-  theme_minimal()
+  theme_minimal() + 
+  labs(title = "Total number of listings")
 
+grid.arrange(p1, p2, ncol=1)
 
 
 
