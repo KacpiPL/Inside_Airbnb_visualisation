@@ -43,10 +43,12 @@ df_London <- df[df$City == "London",]
 dev.off()
 
 ##### Violin plot + Boxplot #####
+# Prepare data
 n_groupped <- df %>%
   group_by(City) %>%
   summarise(num=n())
 
+# Chart
 df %>%
   left_join(n_groupped) %>%
   mutate(myaxis = paste0(City, "\n", "n = ", num)) %>%
@@ -60,53 +62,48 @@ df %>%
                               face="bold"),
     axis.title = element_text(size=14),
     axis.text.x = element_text(size=14),
-    panel.background = element_rect(fill = "white"), # Set the background to white
+    panel.background = element_rect(fill = "white"),
     panel.grid.major = element_line(color = "grey",
-                                    linewidth = 0.3), # Set major grid lines to grey
+                                    linewidth = 0.3),
     panel.grid.minor = element_line(color = "grey",
-                                    linewidth = 0.15) # Set minor grid lines to grey
-   # axis.line = element_line(color = "grey")         # Set axis lines to grey
+                                    linewidth = 0.15)
+   # axis.line = element_line(color = "grey")
   ) +
   ggtitle("Price distributions across cities") +
   xlab("") +
   ylab("Price in EUR")
 
-
-# Density Plot of Ratings with Facet by Room Type
-ggplot(df, aes(x = Rating, fill = room_type)) + 
-  geom_density(alpha = 0.7) + 
-  facet_wrap(~ room_type) +
-  theme_light() +
-  labs(title = "Density of Ratings by Room Type", x = "Rating", y = "Density")
-
-# Mean price by City, room type
-# zmienić kolejność room type
+##### Mean price by City, room type #####
+# Prepare Data
 mean_price_room_type <- df %>%
   group_by(City, room_type) %>%
-  summarise(mean_price = mean(Price_EUR/Beds))
+  summarise(mean_price = mean(Price_EUR/Beds), .groups = 'drop')
 
+### Define the new order of columns to be shown
+desired_order <- c("Hotel room", "Entire home/apt", "Private room", "Shared room")
+### Reorder room_type in mean_price_room_type dataset
+mean_price_room_type$room_type <- factor(mean_price_room_type$room_type, levels = desired_order)
+
+# Chart
 ggplot(mean_price_room_type, aes(x=City, y=mean_price, fill=room_type)) +
-  geom_col(position = position_dodge()) +
-  labs(
-    title = "Mean rent price per Beds by City and Room Type", 
-    x = "City", 
-    y = "Mean Price (EUR)") +
-  theme_light()
-
+  geom_col(position = position_dodge()) + # Create a bar plot
+  scale_fill_brewer(palette="RdYlGn") +
+  theme(
+    plot.title = element_text(size=22,
+                              face="bold"),
+    axis.title = element_text(size=14),
+    axis.text.x = element_text(size=12),
+    panel.background = element_rect(fill = "white"),
+    panel.grid.major = element_line(color = "grey",
+                                    linewidth = 0.3),
+    panel.grid.minor = element_line(color = "grey",
+                                    linewidth = 0.15)
+  ) +
+  ggtitle("Mean rent price per bed per city") +
+  xlab("City") +
+  ylab("Mean price/bed in EUR")
 
 ##### to be changed #####
-# Scatterplot overloaded
-ggplot(df_Berlin, aes(x=Rating, y=Price_EUR/Beds)) +
-  geom_point() +
-  geom_smooth(method=lm , color="red", fill="#69b3a2", se=TRUE) +
-  scale_fill_viridis(discrete = TRUE) +
-  theme_ipsum() +
-  theme(
-    legend.position="none",
-    plot.title = element_text(size=11)
-  ) +
-  ggtitle("A Violin wrapping a boxplot") +
-  xlab("")
 
 ggplot(df, aes(x = center_distance, y = Price_EUR/Beds)) +
   geom_point() +
@@ -229,4 +226,25 @@ p2
 grid.arrange(p2, p1, ncol=1)
 
 
+##### BACKUP #####
+# Density Plot of Ratings with Facet by Room Type
+ggplot(df, aes(x = Rating, fill = room_type)) + 
+  geom_density(alpha = 0.7) + 
+  facet_wrap(~ room_type) +
+  theme_light() +
+  labs(title = "Density of Ratings by Room Type", x = "Rating", y = "Density")
+
+
+# Scatterplot overloaded
+ggplot(df_Berlin, aes(x=Rating, y=Price_EUR/Beds)) +
+  geom_point() +
+  geom_smooth(method=lm , color="red", fill="#69b3a2", se=TRUE) +
+  scale_fill_viridis(discrete = TRUE) +
+  theme_ipsum() +
+  theme(
+    legend.position="none",
+    plot.title = element_text(size=11)
+  ) +
+  ggtitle("A Violin wrapping a boxplot") +
+  xlab("")
 
