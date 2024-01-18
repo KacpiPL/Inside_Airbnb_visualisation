@@ -13,27 +13,13 @@ library(RColorBrewer)
 
 rm(list=ls())
 
-# (brewer.pal(9, "RdYlGn"))
-# RColorBrewer
-
+# Read data
 df <- read.csv("./data/final_df.csv")
 df <- df[, -1]
 
+# Filter data to have only the last date
 df <- df %>%
   filter(Date == "2023-12-31")
-
-# Inspirations:
-
-# violin/boxplot <- price, rating
-# 4 roomtype, city - barplot
-
-# number reviews/rating
-# scatterplot - price/rating, city/roomtype
-
-# density/hist - lastreview
-# powyżej 10 listings <- is business???
-
-# heatmap
 
 ##### Graphs #####
 df_Berlin <- df[df$City == "Berlin",]
@@ -103,18 +89,37 @@ ggplot(mean_price_room_type, aes(x=City, y=mean_price, fill=room_type)) +
   xlab("City") +
   ylab("Mean price/bed in EUR")
 
-##### to be changed #####
+##### Bubble graph #####
+# Prepare data
+df_Bubble <- df %>%
+  group_by(City, neighbourhood) %>%
+  summarise(mean_center_distance = mean(center_distance),
+            mean_price = mean(Price_EUR/Beds))
 
-ggplot(df, aes(x = center_distance, y = Price_EUR/Beds)) +
-  geom_point() +
-  labs(title = "Price vs. Distance from City Center", x = "Distance from Center (km)", y = "Price (EUR)")
+palette <- brewer.pal(11, "RdYlGn")
+selected_colors <- palette[c(2, 4, 8)]
 
-
-# TEN ZOSTAJE
+# Graph
 ggplot(df_Bubble, aes(x = mean_center_distance, y = mean_price, colour = City)) +
-  geom_point(alpha=0.7, size = 7)
+  geom_point(alpha=0.7, size = 5) +
+  # scale_color_brewer(palette="RdYlGn") +
+  scale_color_manual(values = selected_colors) +
+  theme(
+    plot.title = element_text(size=22,
+                              face="bold"),
+    axis.title = element_text(size=14),
+    axis.text.x = element_text(size=12),
+    panel.background = element_rect(fill = "white"),
+    panel.grid.major = element_line(color = "grey",
+                                    linewidth = 0.3),
+    panel.grid.minor = element_line(color = "grey",
+                                    linewidth = 0.15)
+  ) +
+  ggtitle("Mean rent price vs mean distance from center") +
+  xlab("Mean distance from city center") +
+  ylab("Mean price/bed in EUR")
 
-# Histograms of ratings
+##### Histograms of ratings #####
 
 ggplot(df_Berlin, aes(x = Rating)) +
   geom_histogram(binwidth = 0.1) +
