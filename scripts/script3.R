@@ -9,8 +9,12 @@ library(reshape2)
 library(hrbrthemes)
 library(viridis)
 library(gridExtra)
+library(RColorBrewer)
 
 rm(list=ls())
+
+# (brewer.pal(9, "RdYlGn"))
+# RColorBrewer
 
 df <- read.csv("./data/final_df.csv")
 df <- df[, -1]
@@ -38,25 +42,35 @@ df_London <- df[df$City == "London",]
 
 dev.off()
 
-# Violin plot + Boxplot
+##### Violin plot + Boxplot #####
 n_groupped <- df %>%
   group_by(City) %>%
   summarise(num=n())
 
 df %>%
   left_join(n_groupped) %>%
-  mutate(myaxis = paste0(City, "\n", "n=", num)) %>%
-  ggplot( aes(x=myaxis, y=Price_EUR, fill=City)) +
+  mutate(myaxis = paste0(City, "\n", "n = ", num)) %>%
+  ggplot(aes(x=myaxis, y=Price_EUR, fill=City)) +
     geom_violin(width=1) +
-    geom_boxplot(width=0.25, color="grey", alpha=0.2) +
-  scale_fill_viridis(discrete = TRUE) +
-  theme_ipsum() +
+    geom_boxplot(width=0.25, color="cornsilk4", alpha=0.2) + # cornsilk4
+  scale_fill_brewer(palette="RdYlGn") +
   theme(
     legend.position="none",
-    plot.title = element_text(size=11)
+    plot.title = element_text(size=22,
+                              face="bold"),
+    axis.title = element_text(size=14),
+    axis.text.x = element_text(size=14),
+    panel.background = element_rect(fill = "white"), # Set the background to white
+    panel.grid.major = element_line(color = "grey",
+                                    linewidth = 0.3), # Set major grid lines to grey
+    panel.grid.minor = element_line(color = "grey",
+                                    linewidth = 0.15) # Set minor grid lines to grey
+   # axis.line = element_line(color = "grey")         # Set axis lines to grey
   ) +
-  ggtitle("Price vs City") +
-  xlab("")
+  ggtitle("Price distributions across cities") +
+  xlab("") +
+  ylab("Price in EUR")
+
 
 # Density Plot of Ratings with Facet by Room Type
 ggplot(df, aes(x = Rating, fill = room_type)) + 
@@ -66,6 +80,7 @@ ggplot(df, aes(x = Rating, fill = room_type)) +
   labs(title = "Density of Ratings by Room Type", x = "Rating", y = "Density")
 
 # Mean price by City, room type
+# zmienić kolejność room type
 mean_price_room_type <- df %>%
   group_by(City, room_type) %>%
   summarise(mean_price = mean(Price_EUR/Beds))
@@ -97,22 +112,10 @@ ggplot(df, aes(x = center_distance, y = Price_EUR/Beds)) +
   geom_point() +
   labs(title = "Price vs. Distance from City Center", x = "Distance from Center (km)", y = "Price (EUR)")
 
-# Bubble chart
-df_Bubble_Berlin <- df %>%
-  filter(City == "Berlin") %>%
-  group_by(City, neighbourhood) %>%
-  summarise(mean_rating = mean(Rating),
-            mean_price = mean(Price_EUR/Beds),
-            mean_center_distance = mean(center_distance))
 
-ggplot(df_Bubble_Berlin, aes(x = mean_center_distance, y = mean_price, size = mean_rating)) +
-  geom_point(alpha=0.7) +
-  scale_size(range = c(.1, 10), name="Mean rating")
-
-ggplot(df_Bubble_Berlin, aes(x = mean_rating, y = mean_price, size = mean_center_distance)) +
-  geom_point(alpha=0.7) +
-  scale_size(range = c(.1, 12), name="Mean center distance")
-
+# TEN ZOSTAJE
+ggplot(df_Bubble, aes(x = mean_center_distance, y = mean_price, colour = City)) +
+  geom_point(alpha=0.7, size = 7)
 
 # Histograms of ratings
 
@@ -129,10 +132,10 @@ ggplot(df_Paris, aes(x = Rating)) +
   labs(title = "Distribution of Property Ratings", x = "Rating", y = "Count")
 
 
-# combined histograms
+# combined histograms - popracować wyskalować
 ggplot(df, aes(x = Rating, fill = City)) +
   geom_histogram(position = "identity", alpha = 0.5, bins = 30) +
-  labs(title = "Comparison of Two Datasets", x = "Value", y = "Frequency")
+  labs(title = "Ratings across Countries", x = "Rating", y = "Frequency")
 
 
 df_hist <- df %>%
@@ -151,26 +154,6 @@ df %>%
   scale_fill_manual(values=c("#69b3a2", "#404080")) +
   theme_ipsum() +
   labs(fill="")
-
-
-# Bubble chart <- find some interesting variables
-# room_type
-# price
-# rating
-# City
-
-
-ggplot(df, aes(x = Rating, y = Price_EUR, size = Rating)) + 
-  geom_point(alpha = 0.7) + 
-  theme_light() +
-  labs(title = "Price vs. Number of Reviews by Room Type", x = "Rating", y = "Price (EUR)")
-
-
-
-
-
-
-
 
 
 ##### Listings in time #####
@@ -223,6 +206,8 @@ p1 <- ggplot(data = df_chart_grouped, aes(x = Date, y = avg_price,
   theme_minimal() +
   labs(title = "Average Price per Bed in Each City")
 
+p1
+
 # Number of listings in each city
 # Change to
 df_chart2 <- df[, c("Date", "City")]
@@ -239,8 +224,9 @@ p2 <- ggplot(data = df_chart2_grouped, aes(x = Date, y = num_listings,
   geom_line() +
   theme_minimal() + 
   labs(title = "Total number of listings")
+p2
 
-grid.arrange(p1, p2, ncol=1)
+grid.arrange(p2, p1, ncol=1)
 
 
 
