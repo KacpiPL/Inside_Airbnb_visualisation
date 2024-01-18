@@ -159,6 +159,10 @@ df %>%
 
 
 ##### Listings in time #####
+# In this part we want to have the number of all listings
+# Because we use just the number of listings and price and bed columns
+# We do not need to delete NAs from all columns
+
 rm(list=ls())
 
 # read df from script1
@@ -196,22 +200,33 @@ df_chart <- df[, c("Date", "City", "Beds", "Price_EUR")]
 df_chart <- na.omit(df_chart)
 
 # Avg price for every city in time
+# Data
 df_chart_grouped <- df_chart %>%
   group_by(Date, City) %>%
   summarise(avg_price = round(mean(Price_EUR/Beds), 2))
 
+# Graph
 p1 <- ggplot(data = df_chart_grouped, aes(x = Date, y = avg_price, 
                           color = factor(City),
                           group = factor(City))) +
-  geom_point() +
-  geom_line() +
-  theme_minimal() +
-  labs(title = "Average Price per Bed in Each City")
-
-p1
+  geom_point(size=2.5) +
+  geom_line(size=0.75) +
+  theme(
+    plot.title = element_text(size=22,
+                              face="bold"),
+    axis.title = element_text(size=14),
+    axis.text.x = element_text(size=12),
+    panel.background = element_rect(fill = "white"),
+    panel.grid.major = element_line(color = "grey",
+                                    linewidth = 0.3),
+    panel.grid.minor = element_line(color = "grey",
+                                    linewidth = 0.15)
+  ) +
+  ggtitle("Mean price per bed in each city") +
+  xlab("Date") +
+  ylab("Mean price/bed in EUR")
 
 # Number of listings in each city
-# Change to
 df_chart2 <- df[, c("Date", "City")]
 df_chart2 <- na.omit(df_chart2)
 
@@ -222,14 +237,27 @@ df_chart2_grouped <- df_chart2 %>%
 p2 <- ggplot(data = df_chart2_grouped, aes(x = Date, y = num_listings, 
                                     color = factor(City),
                                     group = factor(City))) +
-  geom_point() +
-  geom_line() +
-  theme_minimal() + 
-  labs(title = "Total number of listings")
-p2
+  geom_point(size=2.5) +
+  geom_line(size=0.75) +
+  theme(
+    plot.title = element_text(size=22,
+                              face="bold"),
+    axis.title = element_text(size=14),
+    axis.text.x = element_text(size=12),
+    panel.background = element_rect(fill = "white"),
+    panel.grid.major = element_line(color = "grey",
+                                    linewidth = 0.3),
+    panel.grid.minor = element_line(color = "grey",
+                                    linewidth = 0.15)
+  ) +
+  ggtitle("Total number of listings") +
+  xlab("Date") +
+  ylab("Number of listings")
 
 grid.arrange(p2, p1, ncol=1)
 
+p1
+p2
 
 ##### BACKUP #####
 # Density Plot of Ratings with Facet by Room Type
