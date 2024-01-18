@@ -10,8 +10,10 @@ library(hrbrthemes)
 library(viridis)
 library(gridExtra)
 library(RColorBrewer)
+library(extrafont)
 
 rm(list=ls())
+# font_import()
 
 # Read data
 df <- read.csv("./data/final_df.csv")
@@ -43,18 +45,18 @@ df %>%
     geom_boxplot(width=0.25, color="cornsilk4", alpha=0.2) + # cornsilk4
   scale_fill_brewer(palette="RdYlGn") +
   theme(
-    legend.position="none",
+    legend.position = "none",
+    plot.background = element_rect(fill = "#f2ebe6"),
+    panel.background = element_rect(fill = "#f2ebe6"), 
+    text = element_text(family = "Lora"),
+    panel.grid.major = element_line(color = "lightgray"),
+    panel.grid.minor = element_line(color = "lightgray"),
+    panel.border = element_rect(color = "black", fill = NA, size = 0.5),
     plot.title = element_text(size=22,
                               face="bold"),
     axis.title = element_text(size=14),
-    axis.text.x = element_text(size=14),
-    panel.background = element_rect(fill = "white"),
-    panel.grid.major = element_line(color = "grey",
-                                    linewidth = 0.3),
-    panel.grid.minor = element_line(color = "grey",
-                                    linewidth = 0.15)
+    axis.text.x = element_text(size=14)) +
    # axis.line = element_line(color = "grey")
-  ) +
   ggtitle("Price distributions across cities") +
   xlab("") +
   ylab("Price in EUR")
@@ -75,19 +77,22 @@ ggplot(mean_price_room_type, aes(x=City, y=mean_price, fill=room_type)) +
   geom_col(position = position_dodge()) + # Create a bar plot
   scale_fill_brewer(palette="RdYlGn") +
   theme(
+    plot.background = element_rect(fill = "#f2ebe6"),
+    panel.background = element_rect(fill = "#f2ebe6"), 
+    text = element_text(family = "Lora"),
+    panel.grid.major = element_line(color = "lightgray"),
+    panel.grid.minor = element_line(color = "lightgray"),
+    panel.border = element_rect(color = "black", fill = NA, size = 0.5),
     plot.title = element_text(size=22,
                               face="bold"),
     axis.title = element_text(size=14),
-    axis.text.x = element_text(size=12),
-    panel.background = element_rect(fill = "white"),
-    panel.grid.major = element_line(color = "grey",
-                                    linewidth = 0.3),
-    panel.grid.minor = element_line(color = "grey",
-                                    linewidth = 0.15)
-  ) +
+    axis.text.x = element_text(size=14),
+    legend.background = element_rect(fill = "#f2ebe6", size = 0.5),
+    legend.key = element_rect(fill = "#f2ebe6", color = "black")) +
   ggtitle("Mean rent price per bed per city") +
   xlab("City") +
-  ylab("Mean price/bed in EUR")
+  ylab("Mean price/bed in EUR") +
+  scale_fill_discrete(name = "Room type")
 
 ##### Bubble graph #####
 # Prepare data
@@ -105,16 +110,18 @@ ggplot(df_Bubble, aes(x = mean_center_distance, y = mean_price, colour = City)) 
   # scale_color_brewer(palette="RdYlGn") +
   scale_color_manual(values = selected_colors) +
   theme(
+    plot.background = element_rect(fill = "#f2ebe6"),
+    panel.background = element_rect(fill = "#f2ebe6"), 
+    text = element_text(family = "Lora"),
+    panel.grid.major = element_line(color = "lightgray"),
+    panel.grid.minor = element_line(color = "lightgray"),
+    panel.border = element_rect(color = "black", fill = NA, size = 0.5),
     plot.title = element_text(size=22,
                               face="bold"),
     axis.title = element_text(size=14),
-    axis.text.x = element_text(size=12),
-    panel.background = element_rect(fill = "white"),
-    panel.grid.major = element_line(color = "grey",
-                                    linewidth = 0.3),
-    panel.grid.minor = element_line(color = "grey",
-                                    linewidth = 0.15)
-  ) +
+    axis.text.x = element_text(size=14),
+    legend.background = element_rect(fill = "#f2ebe6", size = 0.5),
+    legend.key = element_rect(fill = "#f2ebe6", color = "black")) +
   ggtitle("Mean rent price vs mean distance from center") +
   xlab("Mean distance from city center") +
   ylab("Mean price/bed in EUR")
@@ -212,19 +219,24 @@ p1 <- ggplot(data = df_chart_grouped, aes(x = Date, y = avg_price,
   geom_point(size=2.5) +
   geom_line(size=0.75) +
   theme(
+    plot.background = element_rect(fill = "#f2ebe6"),
+    panel.background = element_rect(fill = "#f2ebe6"), 
+    text = element_text(family = "Lora"),
+    panel.grid.major = element_line(color = "lightgray"),
+    panel.grid.minor = element_line(color = "lightgray"),
+    panel.border = element_rect(color = "black", fill = NA, size = 0.5),
     plot.title = element_text(size=22,
                               face="bold"),
     axis.title = element_text(size=14),
-    axis.text.x = element_text(size=12),
-    panel.background = element_rect(fill = "white"),
-    panel.grid.major = element_line(color = "grey",
-                                    linewidth = 0.3),
-    panel.grid.minor = element_line(color = "grey",
-                                    linewidth = 0.15)
-  ) +
+    axis.text.x = element_text(size=14),
+    legend.background = element_rect(fill = "#f2ebe6", size = 0.5),
+    legend.key = element_rect(fill = "#f2ebe6", color = "black")) +
   ggtitle("Mean price per bed in each city") +
   xlab("Date") +
-  ylab("Mean price/bed in EUR")
+  ylab("Mean price/bed in EUR") +
+  labs(color = "City")
+
+p1
 
 # Number of listings in each city
 df_chart2 <- df[, c("Date", "City")]
@@ -240,19 +252,22 @@ p2 <- ggplot(data = df_chart2_grouped, aes(x = Date, y = num_listings,
   geom_point(size=2.5) +
   geom_line(size=0.75) +
   theme(
+    plot.background = element_rect(fill = "#f2ebe6"),
+    panel.background = element_rect(fill = "#f2ebe6"), 
+    text = element_text(family = "Lora"),
+    panel.grid.major = element_line(color = "lightgray"),
+    panel.grid.minor = element_line(color = "lightgray"),
+    panel.border = element_rect(color = "black", fill = NA, size = 0.5),
     plot.title = element_text(size=22,
                               face="bold"),
     axis.title = element_text(size=14),
-    axis.text.x = element_text(size=12),
-    panel.background = element_rect(fill = "white"),
-    panel.grid.major = element_line(color = "grey",
-                                    linewidth = 0.3),
-    panel.grid.minor = element_line(color = "grey",
-                                    linewidth = 0.15)
-  ) +
+    axis.text.x = element_text(size=14),
+    legend.background = element_rect(fill = "#f2ebe6", size = 0.5),
+    legend.key = element_rect(fill = "#f2ebe6", color = "black")) +
   ggtitle("Total number of listings") +
   xlab("Date") +
-  ylab("Number of listings")
+  ylab("Number of listings") +
+  labs(color = "City")
 
 grid.arrange(p2, p1, ncol=1)
 
