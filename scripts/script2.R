@@ -11,18 +11,15 @@ rm(list=ls())
 
 # Read .csv from script1
 df <- read.csv("./data/df.csv")
+
 ##### NAs handling #####
-# number of observations in each city
+# Calculate the number of observations in each city
 num_obs_city_with_nas <- df %>%
   group_by(City) %>%
   summarise(n())
 
+# Check the number of NAa and write it to df
 num_nas <- as.data.frame(colSums(is.na(df)))
-
-#df <- df %>%
-  #mutate(neighbourhood = ifelse(City == "Berlin", neighbourhood_group, neighbourhood)) %>%
-  #mutate(neighbourhood = ifelse(City == "Paris" & neighbourhood == "Entrepôt", "Enclos-St-Laurent", neighbourhood)) %>%
-  #mutate(neighbourhood = ifelse(City == "Paris" & neighbourhood == "Buttes-Montmartre", "Butte-Montmartre", neighbourhood))
 
 # Delete column with the most NAs and unnecessary
 df <- subset(df, select = -neighbourhood_group)
@@ -30,13 +27,18 @@ df <- subset(df, select = -neighbourhood_group)
 # Delete reviews per month column
 df <- subset(df, select= -reviews_per_month)
 
+# Delete NAs
 df_without_nas <- na.omit(df)
 
+# Calculate the number of observations in each city after deleting NAs
 num_obs_city_without_nas <- df_without_nas %>%
   group_by(City) %>%
   summarise(n())
 
+# Overwrite df with df_without_nas
 df <- df_without_nas
+
+# Remove unnecessary df
 rm(df_without_nas)
 
 ##### Outliers handling #####
@@ -77,8 +79,10 @@ df_London_z <- delete_outliers(df_London, 3)
 # Merge dfs
 df_z <- rbind(df_Berlin_z, df_Paris_z, df_London_z)
 
+# Overwrite df with df_z
 df <- df_z
 
+# Calculate the number of observations after applying z score method
 num_obs_city_without_nas_without_outliers <- df %>% 
   group_by(City) %>%
   summarise(n())
@@ -87,6 +91,7 @@ num_obs_city_without_nas_without_outliers <- df %>%
 # 648 433 <- n(df) at the beginning
 # 234 833 <- n(df) after cleaning the df and outliers handling
 
+# Write csv
 write.csv(df, "./data/final_df.csv")
 rm(list=ls())
 
