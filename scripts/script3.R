@@ -11,6 +11,7 @@ library(viridis)
 library(gridExtra)
 library(RColorBrewer)
 library(extrafont)
+library(magick)
 
 rm(list=ls())
 # font_import()
@@ -30,16 +31,16 @@ df_London <- df[df$City == "London",]
 
 dev.off()
 
-##### Violin plot + Boxplot #####
+##### Violin plot price #####
 # Prepare data
 n_groupped <- df %>%
   group_by(City) %>%
-  summarise(num=n())
+  summarise(num=n(), mean_price = round(mean(Price_EUR),2))
 
 # Chart
 df %>%
   left_join(n_groupped) %>%
-  mutate(myaxis = paste0(City, "\n", "n = ", num)) %>%
+  mutate(myaxis = paste0(City, "\n", "n = ", num, "\n", "mean = ", mean_price)) %>%
   ggplot(aes(x=myaxis, y=Price_EUR, fill=City)) +
     geom_violin(width=1) +
     geom_boxplot(width=0.25, color="cornsilk4", alpha=0.2) + # cornsilk4
@@ -57,9 +58,38 @@ df %>%
     axis.title = element_text(size=14),
     axis.text.x = element_text(size=14)) +
    # axis.line = element_line(color = "grey")
-  ggtitle("Price distributions across cities") +
+  ggtitle("Price distributions across cities [EUR]") +
   xlab("") +
-  ylab("Price in EUR")
+  ylab("Price")
+
+##### Violin plot ratings distributions #####
+n_groupped <- df %>%
+  group_by(City) %>%
+  summarise(num=n(), mean_price = round(mean(Rating),2))
+
+df %>%
+  left_join(n_groupped) %>%
+  mutate(myaxis = paste0(City, "\n", "n = ", num, "\n", "mean = ", mean_price)) %>%
+  ggplot(aes(x=myaxis, y=Rating, fill=City)) +
+  geom_violin(width=1) +
+  geom_boxplot(width=0.25, color="cornsilk4", alpha=0.2) + # cornsilk4
+  scale_fill_brewer(palette="RdYlGn") +
+  theme(
+    legend.position = "none",
+    plot.background = element_rect(fill = "#f2ebe6"),
+    panel.background = element_rect(fill = "#f2ebe6"), 
+    text = element_text(family = "Lora"),
+    panel.grid.major = element_line(color = "lightgray"),
+    panel.grid.minor = element_line(color = "lightgray"),
+    panel.border = element_rect(color = "black", fill = NA, size = 0.5),
+    plot.title = element_text(size=22,
+                              face="bold"),
+    axis.title = element_text(size=14),
+    axis.text.x = element_text(size=14)) +
+  # axis.line = element_line(color = "grey")
+  ggtitle("Rating distributions across cities") +
+  xlab("") +
+  ylab("Rating")
 
 ##### Mean price by City, room type #####
 # Prepare Data
