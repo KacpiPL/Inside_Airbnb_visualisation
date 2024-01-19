@@ -156,45 +156,6 @@ ggplot(df_Bubble, aes(x = mean_center_distance, y = mean_price, colour = City)) 
   xlab("Mean distance from city center") +
   ylab("Mean price/bed in EUR")
 
-##### Histograms of ratings #####
-
-ggplot(df_Berlin, aes(x = Rating)) +
-  geom_histogram(binwidth = 0.1) +
-  labs(title = "Distribution of Property Ratings", x = "Rating", y = "Count")
-
-ggplot(df_London, aes(x = Rating)) +
-  geom_histogram(binwidth = 0.1) +
-  labs(title = "Distribution of Property Ratings", x = "Rating", y = "Count")
-
-ggplot(df_Paris, aes(x = Rating)) +
-  geom_histogram(binwidth = 0.1) +
-  labs(title = "Distribution of Property Ratings", x = "Rating", y = "Count")
-
-
-# combined histograms - popracować wyskalować
-ggplot(df, aes(x = Rating, fill = City)) +
-  geom_histogram(position = "identity", alpha = 0.5, bins = 30) +
-  labs(title = "Ratings across Countries", x = "Rating", y = "Frequency")
-
-
-df_hist <- df %>%
-  group_by(City, Rating) %>%
-  summarise(count = n()) %>%
-  mutate(Percent = count / sum(count))
-
-ggplot(df_hist, aes(x = Rating, y = Percent, fill = City)) +
-  geom_histogram(position = "identity", alpha = 0.5, bins = 30) +
-  labs(title = "Percentage Share of Ratings by City", x = "Ratings", y = "Percentage") +
-
-
-df %>%
-  ggplot(aes(x=Rating, fill=City)) +
-  geom_histogram( color="#e9ecef", alpha=0.6, position = 'identity') +
-  scale_fill_manual(values=c("#69b3a2", "#404080")) +
-  theme_ipsum() +
-  labs(fill="")
-
-
 ##### Listings in time #####
 # In this part we want to have the number of all listings
 # Because we use just the number of listings and price and bed columns
@@ -303,26 +264,3 @@ grid.arrange(p2, p1, ncol=1)
 
 p1
 p2
-
-##### BACKUP #####
-# Density Plot of Ratings with Facet by Room Type
-ggplot(df, aes(x = Rating, fill = room_type)) + 
-  geom_density(alpha = 0.7) + 
-  facet_wrap(~ room_type) +
-  theme_light() +
-  labs(title = "Density of Ratings by Room Type", x = "Rating", y = "Density")
-
-
-# Scatterplot overloaded
-ggplot(df_Berlin, aes(x=Rating, y=Price_EUR/Beds)) +
-  geom_point() +
-  geom_smooth(method=lm , color="red", fill="#69b3a2", se=TRUE) +
-  scale_fill_viridis(discrete = TRUE) +
-  theme_ipsum() +
-  theme(
-    legend.position="none",
-    plot.title = element_text(size=11)
-  ) +
-  ggtitle("A Violin wrapping a boxplot") +
-  xlab("")
-
