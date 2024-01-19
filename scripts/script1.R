@@ -33,7 +33,7 @@ df_berlin <- read_and_combine(file_paths_berlin, "Berlin", "EUR")
 df_london <- read_and_combine(file_paths_london, "London", "GBP")
 df_paris <- read_and_combine(file_paths_paris, "Paris", "EUR")
 
-
+# Join the df's into one df
 df <- rbind(df_berlin, df_london, df_paris)
 rm(df_berlin, df_london, df_paris)
 
@@ -61,10 +61,10 @@ df <- df[ , !names(df) %in% unnecessary_columns]
 ## Baths
 
 # Check the variable "name"
-name <- df[1, "name"]
+name <- df[500000, "name"]
 name
 
-# Separate the data
+# Separate the data - extract data from the column "name"
 df1 <- df %>%
   mutate(
     Type = str_extract(name, "^[^·]+"),
@@ -113,6 +113,7 @@ df <- df[ , !names(df) %in% "name"]
 ## GBP/EUR at the beginning of December = 1.16
 df$Price_EUR <- ifelse(df$Currency == "EUR", df$price, df$price / 1.16)
 
+# Define city centers longitude and latitude
 Berlin_cent <- c(13.404954, 52.520008)
 London_cent <- c(-0.118092, 51.509865)
 Paris_cent  <- c(2.349014, 48.864716)
@@ -128,9 +129,7 @@ df <- df %>%
     Business_Owned = ifelse(calculated_host_listings_count > 10, 1, 0)
   )
 
-
-
-# Change the order of columns
+# Define the new order of columns
 new_order <- c(
   "id",
   "Date",
@@ -161,6 +160,7 @@ new_order <- c(
   "Business_Owned"
 )
 
+# Apply the new order of columns
 df <- df[, new_order]
 
 write.csv(df, "./data/df.csv", row.names = FALSE)
