@@ -89,7 +89,7 @@ num_obs_city_without_nas_without_outliers <- df %>%
 
 # According to the z score method applied to each column we lose around 400 thousand observations
 # 648 433 <- n(df) at the beginning
-# 234 833 <- n(df) after cleaning the df and outliers handling
+# 233 451 <- n(df) after cleaning the df and outliers handling
 
 # Write csv
 write.csv(df, "./data/final_df.csv")
