@@ -160,16 +160,18 @@ ggplot(df_Bubble, aes(x = mean_center_distance, y = mean_price, colour = City)) 
 # In this part we want to have the number of all listings
 # Because we use just the number of listings and price and bed columns
 # We do not need to delete NAs from all columns
+# We read the data from 1_Data_Processing once again
 
 rm(list=ls())
 
-# read df from script1
+# read df from 1_Data_Processing
 df <- read.csv("./data/df.csv")
 
 df_Berlin <- df[df$City == "Berlin",]
 df_Paris <- df[df$City == "Paris",]
 df_London <- df[df$City == "London",]
 
+# Function to delete outliers basing on z score method, but applied to just one column
 delete_outliers_one_column <- function(df, threshold, col_name){
   z_scores <- df[col_name] %>% 
     lapply(function(x) scale(x, center = TRUE, scale = TRUE)) %>%
@@ -260,7 +262,36 @@ p2 <- ggplot(data = df_chart2_grouped, aes(x = Date, y = num_listings,
   ylab("Number of listings") +
   labs(color = "City")
 
-grid.arrange(p2, p1, ncol=1)
-
 p1
 p2
+
+##### Visualization of Top host names [on a full dataset, before deleting the column] ####
+top_hosts <- df %>%
+  count(City, host_name) %>%
+  group_by(City) %>%
+  top_n(5, n) %>%
+  ungroup()
+
+# Create the histograms
+ggplot(top_hosts, aes(x = host_name, y = n)) +
+  geom_bar(stat = "identity") +
+  facet_wrap(~ City, scales = "free") +
+  theme(plot.title = element_text(size=18, face="bold", margin = margin(b = 12)),
+        axis.title = element_text(size=14),
+        axis.text.x = element_text(size=14, angle = 45, hjust = 1),
+        axis.text.y = element_text(size=14),
+        strip.text = element_text(size = 16),  # Increase the size of facet labels
+        plot.background = element_rect(fill = "#f2ebe6"),
+        panel.background = element_rect(fill = "#f2ebe6"), 
+        panel.grid.major = element_line(color = "lightgray"),
+        text = element_text(family = "Lora"),
+        panel.border = element_rect(color = "black", fill = NA, size = 0.5),
+        legend.background = element_rect(fill = "#f2ebe6", size = 0.2),
+        legend.position = c(1, 1),
+        legend.justification = c(1, 0),
+        legend.key = element_rect(fill = "#f2ebe6", color = "black"),
+        plot.margin = margin(20, 10, 10, 10)) +
+  xlab("Host Name") +
+  ylab("Frequency") +
+  ggtitle("Top 5 Host Names in Each City")
+##
