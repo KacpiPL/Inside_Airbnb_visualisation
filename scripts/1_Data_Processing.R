@@ -4,6 +4,8 @@ library(stringr)
 library(geosphere)
 library(purrr)
 library(readr)
+library(forecast)
+
 rm(list=ls())
 
 # Load all datasets
@@ -35,7 +37,8 @@ df_paris <- read_and_combine(file_paths_paris, "Paris", "EUR")
 
 # Join the df's into one df
 df <- rbind(df_berlin, df_london, df_paris)
-rm(df_berlin, df_london, df_paris)
+rm(df_berlin, df_london, df_paris, read_and_combine, 
+   file_paths_berlin, file_paths_london, file_paths_paris, quarter_end_dates)
 
 # Change the order of columns
 for (i in 1:2){
@@ -49,42 +52,8 @@ for (i in 1:2){
 # Remove unnecessary variables
 rm(i, column_names, new_order)
 
-##### Visualization of Top host names [on a full dataset, before deleting the column] ####
-top_hosts <- df %>%
-  count(City, host_name) %>%
-  group_by(City) %>%
-  top_n(5, n) %>%
-  ungroup() %>%
-  mutate(host_name = fct_reorder(host_name, n))
-
-# Create the histograms
-ggplot(top_hosts, aes(x = host_name, y = n)) +
-  geom_bar(stat = "identity") +
-  facet_wrap(~ City, scales = "free") +
-  theme(plot.title = element_text(size=18, face="bold", margin = margin(b = 12)),
-        axis.title = element_text(size=14),
-        axis.text.x = element_text(size=14, angle = 45, hjust = 1),
-        axis.text.y = element_text(size=14),
-        strip.text = element_text(size = 16),  # Increase the size of facet labels
-        plot.background = element_rect(fill = "#f2ebe6"),
-        panel.background = element_rect(fill = "#f2ebe6"), 
-        panel.grid.major = element_line(color = "lightgray"),
-        text = element_text(family = "Lora"),
-        panel.border = element_rect(color = "black", fill = NA, size = 0.5),
-        legend.background = element_rect(fill = "#f2ebe6", size = 0.2),
-        legend.position = c(1, 1),
-        legend.justification = c(1, 0),
-        legend.key = element_rect(fill = "#f2ebe6", color = "black"),
-        plot.margin = margin(20, 10, 10, 10)) +
-  xlab("Host Name") +
-  ylab("Frequency") +
-  ggtitle("Top 5 Host Names in Each City")
-##
-
-#####
-
 # Remove unnecessary columns
-unnecessary_columns <- c("host_id", "host_name", "license")
+unnecessary_columns <- c("host_id", "license")
 df <- df[ , !names(df) %in% unnecessary_columns]
 
 # Divide the column "name" to a few columns:
@@ -116,7 +85,7 @@ bath_null <- df1[is.na(df1$Bath), ]
 
 df <- df1
 # Remove unnecessary variables
-rm(rating_null, bedroom_null, beds_null, bath_null, name, unnecessary_columns)
+rm(rating_null, bedroom_null, beds_null, bath_null, name, unnecessary_columns, df1)
 
 # Clean columns Rating, Bedroom, Beds, Bath
 df$Rating <- as.numeric(gsub("★", "", df$Rating))
@@ -184,6 +153,7 @@ new_order <- c(
   "longitude",
   "center_distance",
   "room_type",
+  "host_name",
   "minimum_nights",
   "number_of_reviews",
   "last_review",
