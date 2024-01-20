@@ -5,3 +5,6 @@
 .DS_Store
 plots/
 presentation/
+data/df.csv
+
+data/final_df.csv
