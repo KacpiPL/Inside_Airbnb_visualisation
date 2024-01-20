@@ -12,7 +12,7 @@ library(gridExtra)
 library(RColorBrewer)
 library(extrafont)
 library(magick)
-
+library(tidyverse)
 rm(list=ls())
 # font_import()
 
@@ -270,7 +270,8 @@ top_hosts <- df %>%
   count(City, host_name) %>%
   group_by(City) %>%
   top_n(5, n) %>%
-  ungroup()
+  ungroup() %>%
+  mutate(host_name = fct_reorder(host_name, n))
 
 # Create the histograms
 ggplot(top_hosts, aes(x = host_name, y = n)) +
@@ -295,3 +296,57 @@ ggplot(top_hosts, aes(x = host_name, y = n)) +
   ylab("Frequency") +
   ggtitle("Top 5 Host Names in Each City")
 ##
+
+##### Charts #####
+ggplot(data = df, aes(y = Price_EUR, x = City)) +
+  geom_boxplot()
+
+par(mfrow=c(2,2))
+hist(df_Paris_z$Price_EUR)
+hist(df_Berlin_z$Price_EUR)
+hist(df_London_z$Price_EUR)
+
+##### Unused Graphs #####
+df %>%
+  filter(Date == '2023-12-31') %>%
+  ggplot(aes(x = center_distance, y = Price_EUR, color = City)) +
+  geom_point(alpha = 0.01) +
+  scale_color_brewer(palette = "Set1") +
+  labs(x = "Center Distance (km)", y = "Price (EUR)", color = "City") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    legend.position = "bottom"
+  ) +
+  ggtitle("Price vs Center Distance by City")
+
+##### Treemap
+
+df_summary <- df %>%
+  group_by(City, neighbourhood) %>%
+  summarise(
+    Listings = n(),
+    Avg_Price = mean(Price_EUR, na.rm = TRUE)
+  ) %>%
+  mutate(
+    Label = paste(neighbourhood, "\nAvg. Price:", round(Avg_Price, 2))
+  )
+
+# Define the color palette
+pal <- viridis(256)
+
+# Create a treemap for each city
+for (city in unique(df_summary$City)) {
+  df_city <- df_summary %>%
+    filter(City == city)
+  
+  treemap(
+    df_city,
+    index = "Label",
+    vSize = "Listings",
+    vColor = "Avg_Price",
+    type = "index",
+    palette = pal,
+    title = paste("Treemap of", city)
+  )
+}
