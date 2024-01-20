@@ -49,6 +49,40 @@ for (i in 1:2){
 # Remove unnecessary variables
 rm(i, column_names, new_order)
 
+##### Visualization of Top host names [on a full dataset, before deleting the column] ####
+top_hosts <- df %>%
+  count(City, host_name) %>%
+  group_by(City) %>%
+  top_n(5, n) %>%
+  ungroup() %>%
+  mutate(host_name = fct_reorder(host_name, n))
+
+# Create the histograms
+ggplot(top_hosts, aes(x = host_name, y = n)) +
+  geom_bar(stat = "identity") +
+  facet_wrap(~ City, scales = "free") +
+  theme(plot.title = element_text(size=18, face="bold", margin = margin(b = 12)),
+        axis.title = element_text(size=14),
+        axis.text.x = element_text(size=14, angle = 45, hjust = 1),
+        axis.text.y = element_text(size=14),
+        strip.text = element_text(size = 16),  # Increase the size of facet labels
+        plot.background = element_rect(fill = "#f2ebe6"),
+        panel.background = element_rect(fill = "#f2ebe6"), 
+        panel.grid.major = element_line(color = "lightgray"),
+        text = element_text(family = "Lora"),
+        panel.border = element_rect(color = "black", fill = NA, size = 0.5),
+        legend.background = element_rect(fill = "#f2ebe6", size = 0.2),
+        legend.position = c(1, 1),
+        legend.justification = c(1, 0),
+        legend.key = element_rect(fill = "#f2ebe6", color = "black"),
+        plot.margin = margin(20, 10, 10, 10)) +
+  xlab("Host Name") +
+  ylab("Frequency") +
+  ggtitle("Top 5 Host Names in Each City")
+##
+
+#####
+
 # Remove unnecessary columns
 unnecessary_columns <- c("host_id", "host_name", "license")
 df <- df[ , !names(df) %in% unnecessary_columns]

@@ -15,11 +15,42 @@ rm(list=ls())
 df <- read.csv("./data/final_df.csv")
 df <- df[, -1]
 
+### Selecting only last perios for Maps
 df <- df %>%
   filter(Date == "2023-12-31")
 
 
 ##### MAPS #####
+
+##### Leaflet Map - 1st Slide
+
+lat <- 51.1657
+lng <- 10.4515
+
+berlin <- c(52.5200, 13.4050)
+london <- c(51.5074, -0.1278)
+paris <- c(48.8566, 2.3522)
+
+# Create a leaflet map
+m <- leaflet() %>%
+  setView(lng = lng, lat = lat, zoom = 4) %>%
+  addTiles(urlTemplate = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+           options = tileOptions(minZoom = 3, maxZoom = 10)) %>%
+  addMarkers(lng = berlin[2], lat = berlin[1], popup = "Berlin") %>%
+  addMarkers(lng = london[2], lat = london[1], popup = "London") %>%
+  addMarkers(lng = paris[2], lat = paris[1], popup = "Paris") %>%
+  addControl("Leaflet Map", position = "bottomright")
+
+
+
+# Plot the points on the map
+ggmap(london_map) +
+  geom_point(data = london_df, aes(x = longitude, y = latitude, color = as.factor(Business_Owned)), alpha = 0.3, size = 0.05) +
+  scale_color_manual(values = c("#a6cee3", "red")) +
+  labs(x = "Longitude", y = "Latitude", color = "Business Owned") +
+  ggtitle("Occurrences in London")
+
+
 # Load the shapefiles
 berlin_sp <- geojson_read("./data/berlin.geojson", what = 'sp')
 london_sp <- geojson_read("./data/london.geojson", what = 'sp')
@@ -30,7 +61,7 @@ paris_sp_sf <- st_as_sf(paris_sp)
 london_sp_sf <- st_as_sf(london_sp)
 berlin_sp_sf <- st_as_sf(berlin_sp)
 
-# Join the data frames
+# Join the data frames [Calculate mean Rating,Price for neighbourhoods]
 paris_map <- left_join(paris_sp_sf, 
                        df %>% filter(City == "Paris") %>% 
                          group_by(neighbourhood) %>% 
@@ -53,18 +84,7 @@ berlin_map <- left_join(berlin_sp_sf,
                           mutate(City = "Berlin"), 
                         by = c("neighbourhood" = "neighbourhood"))
   
-  
-  
-  df %>%
-  filter(City == "Berlin") %>%
-  group_by(neighbourhood) %>%
-  summarise(Avg_Rating = mean(Rating), Avg_Price = mean(Price_EUR/Beds), cnt = n()) %>%
-  filter(cnt > 10) %>%
-  mutate(City = "Berlin") %>%
-  right_join(berlin_sp_sf, by = c("neighbourhood" = "neighbourhood")) %>%
-  select(-cnt)
-
-# Make the geometries valid
+# Make the geometries valid [had problems with applying just simple feature for berlin]
 paris_map$geometry <- st_make_valid(paris_map$geometry)
 london_map$geometry <- st_make_valid(london_map$geometry)
 berlin_map$geometry <- st_make_valid(berlin_map$geometry)
@@ -72,23 +92,7 @@ berlin_map$geometry <- st_make_valid(berlin_map$geometry)
 # Create a list of the city maps
 city_maps <- list(Paris = paris_map, London = london_map, Berlin = berlin_map)
 
-# Initialize an empty data frame to store the results
-min_max_prices <- data.frame()
-
-# For each city, find the neighborhood with the highest and lowest average prices
-min_prices <- list()
-max_prices <- list()
-
-# For each city, find the neighborhood with the highest and lowest average prices
-for(city in names(city_maps)) {
-  city_data <- city_maps[[city]]
-  max_price <- city_data[which.max(city_data$Avg_Rating), ]
-  max_price$Value <- "max"
-  max_prices[[city]] <- max_price
-  min_price <- city_data[which.min(city_data$Avg_Rating), ]
-  min_price$Value <- "min"
-  min_prices[[city]] <- min_price
-}
+# For each city, find the neighborhood with the highest and lowest average prices/ratings
 
 for(city in names(city_maps)) {
   city_data <- city_maps[[city]]
@@ -98,7 +102,12 @@ for(city in names(city_maps)) {
   assign(paste0("min_rating_", city), city_data[which.min(city_data$Avg_Rating), ])
 }
 
-### LONDON MAP PRICE
+### LONDON MAP PRICE 
+### Maps Description:
+### We used same color gradient for all charts
+### Used geom_text_repel to place annotation [arrows with text]
+### Set up theme in order to use it among all the charts. Used specific font - Lora, background in order to match the presentation
+
 ggplot(data = london_map) +
   geom_sf(aes(fill = Avg_Price)) +
   scale_fill_gradientn(colors = rev(brewer.pal(9, "RdYlGn")), 
@@ -313,30 +322,4 @@ ggplot(data = paris_map) +
   scale_x_continuous(labels = function(x) paste0(round(x, 1), "° E")) +
   scale_y_continuous(labels = function(y) paste0(round(y, 1), "° N"))
 
-##### Leaflet
 
-lat <- 51.1657
-lng <- 10.4515
-
-berlin <- c(52.5200, 13.4050)
-london <- c(51.5074, -0.1278)
-paris <- c(48.8566, 2.3522)
-
-# Create a leaflet map
-m <- leaflet() %>%
-  setView(lng = lng, lat = lat, zoom = 4) %>%
-  addTiles(urlTemplate = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-           options = tileOptions(minZoom = 3, maxZoom = 10)) %>%
-  addMarkers(lng = berlin[2], lat = berlin[1], popup = "Berlin") %>%
-  addMarkers(lng = london[2], lat = london[1], popup = "London") %>%
-  addMarkers(lng = paris[2], lat = paris[1], popup = "Paris") %>%
-  addControl("Leaflet Map", position = "bottomright")
-
-
-
-# Plot the points on the map
-ggmap(london_map) +
-  geom_point(data = london_df, aes(x = longitude, y = latitude, color = as.factor(Business_Owned)), alpha = 0.3, size = 0.05) +
-  scale_color_manual(values = c("#a6cee3", "red")) +
-  labs(x = "Longitude", y = "Latitude", color = "Business Owned") +
-  ggtitle("Occurrences in London")
