@@ -93,7 +93,3 @@ num_obs_city_without_nas_without_outliers <- df %>%
 
 # Write csv
 write.csv(df, "./data/final_df.csv")
-rm(list=ls())
-
-df <- read.csv("./data/final_df.csv")
-
