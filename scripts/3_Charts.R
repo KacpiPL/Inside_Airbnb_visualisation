@@ -273,6 +273,8 @@ top_hosts <- df %>%
   ungroup() %>%
   mutate(host_name = fct_reorder(host_name, n))
 
+top_hosts <- na.omit(top_hosts)
+
 # Create the histograms
 ggplot(top_hosts, aes(x = host_name, y = n)) +
   geom_bar(stat = "identity") +
